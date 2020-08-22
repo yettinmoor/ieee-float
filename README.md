@@ -3,7 +3,7 @@
 This very simple program breaks down float32 values into sign bit, exponent and mantissa. Written as an exercise to learn more about IEEE-754 floats.
 
 
-```{zig}
+```zig
 pub fn main() !void {
     analyzeFloat(8);
     analyzeFloat(9.1);
