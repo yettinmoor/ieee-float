@@ -8,40 +8,45 @@ pub fn main() !void {
     analyzeFloat(@bitCast(f32, @as(u32, 0x7f80_0000))); // inf
 }
 
-fn analyzeFloat(f: f32) void {
-    const f_bits = @bitCast(u32, f);
+const FloatBits = packed struct {
+    mantissa: u23,
+    exponent: u8,
+    sign_bit: u1,
+};
 
-    const sign = @intCast(u1, (f_bits & 0x8000_0000) >> 31);
-    const mantissa = @as(u32, f_bits & 0x007f_ffff);
+fn analyzeFloat(f: f32) void {
+    const f_bits = @bitCast(FloatBits, f);
+
     const exp = blk: {
         const bias = 127;
-        var exp = @intCast(i9, (f_bits & 0x7f80_0000) >> 23);
+        var exp = @intCast(i9, f_bits.exponent);
         if (exp == 0xff) break :blk exp;
-
         if (exp == 0) exp = 1;
-        break :blk exp - bias;
+        break :blk @intCast(i8, exp - bias);
     };
 
     const mantissa_f = blk: {
         var mantissa_f: f64 = if (exp == 0) 0 else 1;
-        var mantissa_copy = mantissa;
+        var mantissa = f_bits.mantissa;
         var pow: u64 = 2;
-        while (mantissa_copy != 0) : (mantissa_copy <<= 1) {
-            if (mantissa_copy & 0x0040_0000 != 0)
+        while (mantissa != 0) : (mantissa <<= 1) {
+            if (mantissa & 0x0040_0000 != 0)
                 mantissa_f += 1 / @intToFloat(f32, pow);
             pow *= 2;
         }
-        if (sign == 1) mantissa_f *= -1;
+        if (f_bits.sign_bit == 1) mantissa_f *= -1;
         break :blk mantissa_f;
     };
 
-    warn("float bits | 0x{x:0<8}\n", .{f_bits});
-    warn("sign       | {}\n", .{sign});
-    warn("mantissa   | 0x{x:0<6}\n", .{mantissa});
+    warn("float bits | 0x{x:0<8}\n", .{@bitCast(u32, f)});
+    warn("sign       | {}\n", .{f_bits.sign_bit});
+    warn("mantissa   | 0x{x:0<6}\n", .{f_bits.mantissa});
 
-    warn("exp        | {}", .{exp});
-    if (exp == 0xff)
-        warn(" (special value)", .{});
+    switch (exp) {
+        0x00 => warn("exp        | 0 (denormalized)", .{}),
+        0xff => warn("exp        | 255 (special value)", .{}),
+        else => warn("exp        | {} ({} - bias)", .{ exp, f_bits.exponent }),
+    }
     warn("\n", .{});
 
     warn(" -> {:.2} = {} * 2 ^ {}\n\n", .{
