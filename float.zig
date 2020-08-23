@@ -38,20 +38,16 @@ fn analyzeFloat(f: f32) void {
         break :blk mantissa_f;
     };
 
-    warn("float bits | 0x{x:0<8}\n", .{@bitCast(u32, f)});
-    warn("sign       | {}\n", .{f_bits.sign_bit});
-    warn("mantissa   | 0x{x:0<6}\n", .{f_bits.mantissa});
+    warn("value    | {:.4}\n", .{f});
+    warn("-----------------------\n", .{});
+    warn("bits     | 0x{x:0<8}\n", .{@bitCast(u32, f)});
+    warn("sign     | {}\n", .{f_bits.sign_bit});
+    warn("mantissa | {:.5} (0x{x:0<6})\n", .{ mantissa_f, f_bits.mantissa });
 
     switch (exp) {
-        0x00 => warn("exp        | 0 (denormalized)", .{}),
-        0xff => warn("exp        | 255 (special value)", .{}),
-        else => warn("exp        | {} ({} - bias)", .{ exp, f_bits.exponent }),
+        0x00 => warn("exp      | 0 (denormalized)", .{}),
+        0xff => warn("exp      | 255 (special value)", .{}),
+        else => warn("exp      | {} ({})", .{ exp, f_bits.exponent }),
     }
-    warn("\n", .{});
-
-    warn(" -> {:.2} = {} * 2 ^ {}\n\n", .{
-        f,
-        mantissa_f,
-        exp,
-    });
+    warn("\n\n", .{});
 }
