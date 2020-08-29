@@ -12,6 +12,7 @@ pub fn main() !void {
     analyzeFloat(f32, @bitCast(f32, @as(u32, 0x7f80_0000))); // inf
 
     analyzeFloat(f64, 16);
+    analyzeFloat(f64, std.math.pi);
     analyzeFloat(f64, 12345678900000000000000000.1);
     analyzeFloat(f64, 1e-310);
     analyzeFloat(f64, @bitCast(f64, @as(u64, 0x7ff0_0000_0000_0001))); // NaN
@@ -52,7 +53,7 @@ value    | f32: inf (inf)
 bits     | 0x7f800000
 sign     | 0
 mantissa | 1.00000000 (0x000000)
-exponent | 255 (special)
+exponent | 128 (special)
 
 value    | f64: 16.00000 (1.60000e+01)
 -----------------------
@@ -61,18 +62,25 @@ sign     | 0
 mantissa | 1.00000000 (0x000000)
 exponent | 4
 
+value    | f64: 3.14159 (3.14159e+00)
+-----------------------
+bits     | 0x400921fb54442d18
+sign     | 0
+mantissa | 1.57079633 (0x921fb54442d18)
+exponent | 1
+
 value    | f64: 12345678900000000000000000.00000 (1.23457e+25)
 -----------------------
 bits     | 0x45246c99303c37aa
 sign     | 0
-mantissa | 1.13825664 (0x46c99303c37aa)
+mantissa | 1.27651328 (0x46c99303c37aa)
 exponent | 83
 
 value    | f64: 0.00000 (1.00000e-310)
 -----------------------
 bits     | 0x12688b70e62b
 sign     | 0
-mantissa | 0.00224712 (0x12688b70e62b)
+mantissa | 0.00449423 (0x12688b70e62b)
 exponent | -1022
 
 value    | f64: nan (nan)
@@ -80,5 +88,5 @@ value    | f64: nan (nan)
 bits     | 0x7ff0000000000001
 sign     | 0
 mantissa | 1.00000000 (0x000001)
-exponent | 2047 (special)
+exponent | 1024 (special)
 ```

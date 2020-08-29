@@ -10,6 +10,7 @@ pub fn main() !void {
     analyzeFloat(f32, @bitCast(f32, @as(u32, 0x7f80_0000))); // inf
 
     analyzeFloat(f64, 16);
+    analyzeFloat(f64, std.math.pi);
     analyzeFloat(f64, 12345678900000000000000000.1);
     analyzeFloat(f64, 1e-310);
     analyzeFloat(f64, @bitCast(f64, @as(u64, 0x7ff0_0000_0000_0001))); // NaN
@@ -31,7 +32,7 @@ fn FloatBits(comptime Float: type) type {
             sign_bit: u1,
 
             const exp_bits = 11;
-            const mantissa_bits = 53;
+            const mantissa_bits = 52;
         },
         f128 => @panic("Unimplemented"),
         else => @panic("Must be float type"),
