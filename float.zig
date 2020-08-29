@@ -44,13 +44,21 @@ fn analyzeFloat(comptime Float: type, f: Float) void {
 
     const is_signed = f_bits.sign_bit == 1;
 
+    // Denormalized: exponent bits all 0
     // Special value: exponent bits all 1
-    const is_special_value = f_bits.exponent == (1 << Bits.exp_bits) - 1;
+    const exp_all_1s = (1 << Bits.exp_bits) - 1;
+    const value_type: enum {
+        normal,
+        denormalized,
+        special,
+    } = switch (f_bits.exponent) {
+        0 => .denormalized,
+        exp_all_1s => .special,
+        else => .normal,
+    };
 
     const SignedExp = IntType(true, Bits.exp_bits + 1);
-    const exponent: SignedExp = if (is_special_value)
-        f_bits.exponent
-    else blk: {
+    const exponent: SignedExp = blk: {
         const bias = (1 << (Bits.exp_bits - 1)) - 1;
         var exp = @intCast(SignedExp, f_bits.exponent);
         if (exp == 0) exp = 1;
@@ -58,7 +66,7 @@ fn analyzeFloat(comptime Float: type, f: Float) void {
     };
 
     const mantissa = blk: {
-        var mantissa: Float = if (f_bits.exponent == 0) 0 else 1;
+        var mantissa: Float = if (value_type == .denormalized) 0 else 1;
         mantissa += @intToFloat(Float, f_bits.mantissa) / (1 << Bits.mantissa_bits);
         break :blk if (is_signed) -mantissa else mantissa;
     };
@@ -72,7 +80,10 @@ fn analyzeFloat(comptime Float: type, f: Float) void {
         \\exponent | {} {}
     ++ "\n\n";
 
-    const special_desc = @as([]const u8, if (is_special_value) "(special)" else "");
+    const special_desc = @as(
+        []const u8,
+        if (value_type == .special) "(special)" else "",
+    );
     const stdout = std.io.getStdOut();
     stdout.outStream().print(fmt, .{
         @typeName(Float),
