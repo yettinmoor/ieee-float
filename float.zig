@@ -1,6 +1,5 @@
 const std = @import("std");
-const warn = std.debug.warn;
-const IntType = std.meta.IntType;
+const Int = std.meta.Int;
 
 pub fn main() !void {
     analyzeFloat(f32, 8);
@@ -58,7 +57,7 @@ fn analyzeFloat(comptime Float: type, f: Float) void {
         else => .normal,
     };
 
-    const SignedExp = IntType(true, Bits.exp_bits + 1);
+    const SignedExp = Int(.signed, Bits.exp_bits + 1);
     const exponent: SignedExp = blk: {
         const bias = (1 << (Bits.exp_bits - 1)) - 1;
         var exp = @intCast(SignedExp, f_bits.exponent);
@@ -73,27 +72,24 @@ fn analyzeFloat(comptime Float: type, f: Float) void {
     };
 
     const fmt =
-        \\value    | {}: {d:.5} ({1:.5})
+        \\value    | {s}: {d:.5} ({1:.5})
         \\-----------------------
         \\bits     | 0x{x:0<8}
         \\sign     | {}
         \\mantissa | {d:.8} (0x{x:0<6})
-        \\exponent | {} {}
+        \\exponent | {} {s}
     ++ "\n\n";
 
-    const special_desc = @as(
-        []const u8,
-        if (value_type == .special) "(special)" else "",
-    );
-    const stdout = std.io.getStdOut();
-    stdout.outStream().print(fmt, .{
+    const special_desc = if (value_type == .special) "(special)" else "";
+
+    std.io.getStdOut().writer().print(fmt, .{
         @typeName(Float),
         f,
-        @bitCast(IntType(false, @bitSizeOf(Float)), f),
+        @bitCast(Int(.unsigned, @bitSizeOf(Float)), f),
         f_bits.sign_bit,
         mantissa,
         f_bits.mantissa,
         exponent,
         special_desc,
-    }) catch unreachable;
+    }) catch {};
 }
